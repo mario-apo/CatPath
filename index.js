@@ -96,9 +96,17 @@ function firstArabic(value) {
     return String(value || "").split("|")[0].trim();
 }
 
+function normalizeCode(value) {
+    const number = Number(value);
+    return Number.isNaN(number) ? "" : String(number);
+}
+
 function getWilayaCode(value) {
     const match = String(value || "").match(/^(\d+)/);
-    return match ? match[1] : "";
+
+    if (!match) return "";
+
+    return normalizeCode(match[1]);
 }
 
 function getInstitutionId(value) {
@@ -262,11 +270,12 @@ const wilayas = {
 
 function findWilaya(input) {
     const value = clean(input);
+    const numericInput = normalizeCode(input);
 
-    if (wilayas[input]) {
+    if (numericInput && wilayas[numericInput]) {
         return {
-            code: input,
-            name: wilayas[input]
+            code: numericInput,
+            name: wilayas[numericInput]
         };
     }
 
