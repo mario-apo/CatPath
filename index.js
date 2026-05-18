@@ -132,6 +132,16 @@ function getSpecialityName(value) {
         .trim();
 }
 
+function getValue(row, keys) {
+    for (const key of keys) {
+        if (row[key] && String(row[key]).trim()) {
+            return firstArabic(row[key]);
+        }
+    }
+
+    return "غير متوفر";
+}
+
 function uniqueBy(array, keyFn) {
     const map = new Map();
 
@@ -171,8 +181,6 @@ function createGoogleMapsUrl(institutionName) {
 function createShareUrl(text) {
     return `https://t.me/share/url?url=${encodeURIComponent("https://takwin.dz/")}&text=${encodeURIComponent(text)}`;
 }
-
-/* LEVEL SYSTEM */
 
 const levelRank = {
     "السنة الأولى ابتدائي": 1,
@@ -226,8 +234,6 @@ function isLevelAllowed(offer, user) {
 
     return offerRank <= userRank;
 }
-
-/* EDUCATION DATA */
 
 const educationLevels = {
     "ابتدائي": [
@@ -294,8 +300,6 @@ function findWilaya(input) {
     return null;
 }
 
-/* KEYBOARDS */
-
 function stageKeyboard() {
     return {
         reply_markup: {
@@ -344,8 +348,6 @@ function finalKeyboard(mapsUrl, shareUrl) {
         }
     };
 }
-
-/* STEP VIEWS */
 
 async function showStage(chatId) {
     await bot.sendMessage(chatId, "اختر المرحلة الدراسية:", stageKeyboard());
@@ -460,16 +462,12 @@ async function goBack(chatId, user) {
     return showStage(chatId);
 }
 
-/* START */
-
 bot.onText(/\/start/, async (msg) => {
     const chatId = msg.chat.id;
 
     resetUser(chatId);
     await showStage(chatId);
 });
-
-/* CALLBACKS */
 
 bot.on("callback_query", async (query) => {
     const chatId = query.message.chat.id;
@@ -505,8 +503,6 @@ bot.on("callback_query", async (query) => {
         return askWilaya(chatId);
     }
 });
-
-/* MESSAGES */
 
 bot.on("message", async (msg) => {
     if (!msg.text) return;
@@ -549,12 +545,20 @@ bot.on("message", async (msg) => {
         }
 
         const selected = user.specialities[index];
+
         const institutionName = getInstitutionName(user.institution["المؤسسة"]);
         const specialityName = getSpecialityName(selected["التخصص"]);
-        const certificate = firstArabic(selected["الشهادة"]) || "غير متوفر";
-        const trainingMode = firstArabic(selected["نمط التكوين"]) || "غير متوفر";
-        const startDate = selected["تاريخ البداية"] || "";
-        const endDate = selected["تاريخ النهاية"] || "";
+
+        const certificate = getValue(selected, ["الشهادة"]);
+        const trainingMode = getValue(selected, ["نمط التكوين"]);
+        const requiredLevel = getValue(selected, ["المستوى المطلوب", "أدنى مستوى"]);
+        const boarding = getValue(selected, ["الداخلية", "داخلي", "النظام الداخلي"]);
+        const offerCode = getValue(selected, ["رمز العرض", "رقم العرض", "offer_code"]);
+        const internalCode = getValue(selected, ["الرمز الداخلي", "الرمز", "code"]);
+        const duration = getValue(selected, ["المدة", "مدة التكوين"]);
+        const seats = getValue(selected, ["عدد المقاعد", "المقاعد", "عدد المناصب"]);
+        const startDate = getValue(selected, ["تاريخ البداية", "بداية التكوين"]);
+        const endDate = getValue(selected, ["تاريخ النهاية", "نهاية التكوين"]);
 
         const mapsUrl = createGoogleMapsUrl(institutionName);
 
@@ -577,6 +581,24 @@ ${certificate}
 نمط التكوين:
 ${trainingMode}
 
+المستوى المطلوب:
+${requiredLevel}
+
+الداخلية:
+${boarding}
+
+رمز العرض:
+${offerCode}
+
+الرمز الداخلي:
+${internalCode}
+
+مدة التكوين:
+${duration}
+
+عدد المقاعد:
+${seats}
+
 تاريخ البداية:
 ${startDate}
 
@@ -590,6 +612,7 @@ ${endDate}`;
 المؤسسة: ${institutionName}
 التخصص: ${specialityName}
 الشهادة: ${certificate}
+رمز العرض: ${offerCode}
 
 موقع التسجيل:
 https://takwin.dz/`;
